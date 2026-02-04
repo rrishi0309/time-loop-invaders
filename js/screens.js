@@ -3,13 +3,16 @@
 const Screens = {
     // Menu state
     selectedOption: 0,
-    menuOptions: ['START GAME', 'DIFFICULTY', 'SETTINGS', 'CREDITS'],
+    menuOptions: ['START GAME', 'DIFFICULTY', 'CREDITS'],
     
     // Difficulty selection
     currentDifficulty: DIFFICULTY.NORMAL,
     difficultyOptions: [DIFFICULTY.EASY, DIFFICULTY.NORMAL, DIFFICULTY.HARD, DIFFICULTY.NIGHTMARE],
     showDifficultyMenu: false,
     difficultyIndex: 1, // Default to NORMAL
+    
+    // Credits screen
+    showCredits: false,
     
     // Transitions
     fadeAlpha: 0,
@@ -89,6 +92,16 @@ const Screens = {
             }
         };
         
+        // Credits screen
+        if (this.showCredits) {
+            if (Input.confirm || Input.pause) {
+                this.showCredits = false;
+                Audio.play('menuNav');
+                ensureMusic();
+            }
+            return null;
+        }
+        
         // Difficulty sub-menu
         if (this.showDifficultyMenu) {
             if (Input.menuUp) {
@@ -136,6 +149,11 @@ const Screens = {
                 Audio.play('menuConfirm');
                 return null;
             }
+            if (this.menuOptions[this.selectedOption] === 'CREDITS') {
+                this.showCredits = true;
+                Audio.play('menuConfirm');
+                return null;
+            }
             return this.menuOptions[this.selectedOption];
         }
         
@@ -150,10 +168,15 @@ const Screens = {
         this.drawShipSprite(ctx, Math.floor(this.menuGhostX * 2), Math.floor(this.menuGhostY * 2));
         ctx.globalAlpha = 1;
         
+        // Star Wars subtitle
+        ctx.font = '10px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = COLORS.GOLD;
+        ctx.fillText('★ A STAR WARS FAN GAME ★', CONFIG.CANVAS_WIDTH / 2, 30);
+        
         // Title
         ctx.fillStyle = COLORS.CYAN;
         ctx.font = '24px "Press Start 2P"';
-        ctx.textAlign = 'center';
         
         // Shadow
         ctx.fillStyle = COLORS.MAGENTA;
@@ -194,15 +217,23 @@ const Screens = {
             this.drawDifficultyMenu(ctx);
         }
         
-        // Version
+        // Credits overlay
+        if (this.showCredits) {
+            this.drawCreditsScreen(ctx);
+        }
+        
+        // Credits at bottom
         ctx.fillStyle = COLORS.GRAY;
-        ctx.font = '10px "Press Start 2P"';
-        ctx.textAlign = 'left';
-        ctx.fillText('v1.1', 10, CONFIG.CANVAS_HEIGHT - 10);
+        ctx.font = '8px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText('Made during Vibe Coding Club', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT - 35);
+        ctx.fillStyle = COLORS.CYAN;
+        ctx.fillText('By Rishi Ramesh', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT - 22);
         
         // Controls hint
-        ctx.textAlign = 'center';
-        ctx.fillText('↑↓ SELECT   SPACE/ENTER CONFIRM', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT - 10);
+        ctx.fillStyle = COLORS.GRAY;
+        ctx.font = '10px "Press Start 2P"';
+        ctx.fillText('↑↓ SELECT   SPACE/ENTER CONFIRM', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT - 8);
         
         // Transition overlay
         this.drawTransition(ctx);
@@ -268,6 +299,64 @@ const Screens = {
             case DIFFICULTY.NIGHTMARE: return COLORS.RED;
             default: return COLORS.WHITE;
         }
+    },
+    
+    drawCreditsScreen(ctx) {
+        // Dim background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+        ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+        
+        // Panel
+        const panelWidth = 450;
+        const panelHeight = 280;
+        const panelX = (CONFIG.CANVAS_WIDTH - panelWidth) / 2;
+        const panelY = (CONFIG.CANVAS_HEIGHT - panelHeight) / 2;
+        
+        ctx.fillStyle = COLORS.PANEL;
+        ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
+        ctx.strokeStyle = COLORS.GOLD;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(panelX, panelY, panelWidth, panelHeight);
+        ctx.lineWidth = 1;
+        
+        ctx.textAlign = 'center';
+        const centerX = CONFIG.CANVAS_WIDTH / 2;
+        
+        // Title
+        ctx.fillStyle = COLORS.GOLD;
+        ctx.font = '18px "Press Start 2P"';
+        ctx.fillText('★ CREDITS ★', centerX, panelY + 40);
+        
+        // Star Wars subtitle
+        ctx.fillStyle = COLORS.YELLOW;
+        ctx.font = '12px "Press Start 2P"';
+        ctx.fillText('A Star Wars Fan Game', centerX, panelY + 70);
+        
+        // Main credit
+        ctx.fillStyle = COLORS.WHITE;
+        ctx.font = '10px "Press Start 2P"';
+        ctx.fillText('Made during', centerX, panelY + 110);
+        ctx.fillStyle = COLORS.CYAN;
+        ctx.font = '14px "Press Start 2P"';
+        ctx.fillText('Vibe Coding Club', centerX, panelY + 135);
+        
+        // Creator
+        ctx.fillStyle = COLORS.WHITE;
+        ctx.font = '10px "Press Start 2P"';
+        ctx.fillText('Created by', centerX, panelY + 175);
+        ctx.fillStyle = COLORS.MAGENTA;
+        ctx.font = '16px "Press Start 2P"';
+        ctx.fillText('Rishi Ramesh', centerX, panelY + 200);
+        
+        // Music credit
+        ctx.fillStyle = COLORS.GRAY;
+        ctx.font = '8px "Press Start 2P"';
+        ctx.fillText('Music inspired by John Williams', centerX, panelY + 235);
+        
+        // Back hint
+        ctx.fillStyle = COLORS.GRAY;
+        ctx.font = '10px "Press Start 2P"';
+        ctx.fillText('Press SPACE or ESC to return', centerX, panelY + panelHeight - 15);
     },
     
     // === PAUSE MENU ===
