@@ -95,4 +95,12 @@ const Input = {
     get menuDown() {
         return this.isPressed('ArrowDown') || this.isPressed('KeyS');
     },
+    
+    get menuLeft() {
+        return this.isPressed('ArrowLeft') || this.isPressed('KeyA');
+    },
+    
+    get menuRight() {
+        return this.isPressed('ArrowRight') || this.isPressed('KeyD');
+    },
 };

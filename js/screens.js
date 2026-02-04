@@ -3,7 +3,7 @@
 const Screens = {
     // Menu state
     selectedOption: 0,
-    menuOptions: ['START GAME', 'DIFFICULTY', 'CREDITS'],
+    menuOptions: ['START GAME', 'DIFFICULTY', 'HOW TO PLAY', 'CREDITS'],
     
     // Difficulty selection
     currentDifficulty: DIFFICULTY.NORMAL,
@@ -11,8 +11,48 @@ const Screens = {
     showDifficultyMenu: false,
     difficultyIndex: 1, // Default to NORMAL
     
-    // Credits screen
+    // Credits screen (Star Wars crawl style)
     showCredits: false,
+    creditsScrollY: 0,
+    
+    // Instructions screen
+    showInstructions: false,
+    instructionsPage: 0,
+    
+    // Star Wars quotes for various moments
+    deathQuotes: [
+        '"I have a bad feeling about this..."',
+        '"That\'s not how the Force works!"',
+        '"The dark side clouds everything."',
+        '"Do or do not. There is no try."',
+        '"I find your lack of skill disturbing."',
+        '"You have failed me for the last time."',
+        '"Impressive... most impressive. But not good enough."',
+        '"The Force is not strong with this one."',
+        '"You were the chosen one!"',
+        '"This is where the fun begins... again."',
+    ],
+    victoryQuotes: [
+        '"The Force is strong with you!"',
+        '"Great shot kid, that was one in a million!"',
+        '"You have learned well, young Padawan."',
+        '"This is the way."',
+        '"A Jedi uses the Force for knowledge and defense."',
+        '"The Force will be with you. Always."',
+        '"Never tell me the odds!"',
+        '"I am one with the Force, the Force is with me."',
+    ],
+    gameOverQuotes: [
+        '"You were supposed to destroy them, not join them!"',
+        '"I sense a great disturbance in the Force."',
+        '"So this is how liberty dies... with thunderous applause."',
+        '"The ability to speak does not make you intelligent."',
+        '"Your overconfidence is your weakness."',
+        '"There is another... try again you must."',
+    ],
+    currentDeathQuote: '',
+    currentVictoryQuote: '',
+    currentGameOverQuote: '',
     
     // Transitions
     fadeAlpha: 0,
@@ -92,10 +132,26 @@ const Screens = {
             }
         };
         
-        // Credits screen
+        // Credits screen (scrolling)
         if (this.showCredits) {
+            this.creditsScrollY += dt * 30; // Scroll speed
             if (Input.confirm || Input.pause) {
                 this.showCredits = false;
+                this.creditsScrollY = 0;
+                Audio.play('menuNav');
+                ensureMusic();
+            }
+            return null;
+        }
+        
+        // Instructions screen
+        if (this.showInstructions) {
+            if (Input.menuLeft || Input.menuRight) {
+                this.instructionsPage = (this.instructionsPage + 1) % 2;
+                Audio.play('menuNav');
+            }
+            if (Input.confirm || Input.pause) {
+                this.showInstructions = false;
                 Audio.play('menuNav');
                 ensureMusic();
             }
@@ -149,8 +205,15 @@ const Screens = {
                 Audio.play('menuConfirm');
                 return null;
             }
+            if (this.menuOptions[this.selectedOption] === 'HOW TO PLAY') {
+                this.showInstructions = true;
+                this.instructionsPage = 0;
+                Audio.play('menuConfirm');
+                return null;
+            }
             if (this.menuOptions[this.selectedOption] === 'CREDITS') {
                 this.showCredits = true;
+                this.creditsScrollY = 0;
                 Audio.play('menuConfirm');
                 return null;
             }
@@ -217,7 +280,12 @@ const Screens = {
             this.drawDifficultyMenu(ctx);
         }
         
-        // Credits overlay
+        // Instructions overlay
+        if (this.showInstructions) {
+            this.drawInstructionsScreen(ctx);
+        }
+        
+        // Credits overlay (Star Wars crawl)
         if (this.showCredits) {
             this.drawCreditsScreen(ctx);
         }
@@ -302,65 +370,193 @@ const Screens = {
     },
     
     drawCreditsScreen(ctx) {
-        // Dim background
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+        // Full black background (like Star Wars opening)
+        ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
         
-        // Panel
-        const panelWidth = 450;
-        const panelHeight = 280;
-        const panelX = (CONFIG.CANVAS_WIDTH - panelWidth) / 2;
-        const panelY = (CONFIG.CANVAS_HEIGHT - panelHeight) / 2;
+        // Draw stars in background
+        ctx.fillStyle = '#FFFFFF';
+        for (let i = 0; i < 50; i++) {
+            const x = (i * 137) % CONFIG.CANVAS_WIDTH;
+            const y = (i * 89) % CONFIG.CANVAS_HEIGHT;
+            ctx.fillRect(x, y, 1, 1);
+        }
         
-        ctx.fillStyle = COLORS.PANEL;
-        ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
-        ctx.strokeStyle = COLORS.GOLD;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(panelX, panelY, panelWidth, panelHeight);
-        ctx.lineWidth = 1;
-        
-        ctx.textAlign = 'center';
         const centerX = CONFIG.CANVAS_WIDTH / 2;
+        ctx.textAlign = 'center';
+        
+        // Star Wars style crawling text
+        const crawlText = [
+            { text: 'A long time ago in a galaxy', size: 10, color: COLORS.CYAN },
+            { text: 'far, far away....', size: 10, color: COLORS.CYAN },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: 'TIME LOOP INVADERS', size: 18, color: COLORS.GOLD },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: 'A STAR WARS FAN GAME', size: 12, color: COLORS.YELLOW },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: 'Episode I', size: 14, color: COLORS.GOLD },
+            { text: 'THE VIBE AWAKENS', size: 16, color: COLORS.GOLD },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: 'It is a period of intense', size: 10, color: COLORS.WHITE },
+            { text: 'coding. A brave developer,', size: 10, color: COLORS.WHITE },
+            { text: 'striking from the Vibe', size: 10, color: COLORS.WHITE },
+            { text: 'Coding Club, has created', size: 10, color: COLORS.WHITE },
+            { text: 'an epic space adventure.', size: 10, color: COLORS.WHITE },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: 'CREATED BY', size: 10, color: COLORS.GRAY },
+            { text: 'RISHI RAMESH', size: 16, color: COLORS.MAGENTA },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: 'MADE DURING', size: 10, color: COLORS.GRAY },
+            { text: 'VIBE CODING CLUB', size: 14, color: COLORS.CYAN },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: 'MUSIC INSPIRED BY', size: 8, color: COLORS.GRAY },
+            { text: 'JOHN WILLIAMS', size: 12, color: COLORS.YELLOW },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: '"May the Force be with you"', size: 10, color: COLORS.CYAN },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: '', size: 10, color: COLORS.WHITE },
+            { text: 'SPECIAL THANKS TO', size: 8, color: COLORS.GRAY },
+            { text: 'George Lucas', size: 10, color: COLORS.WHITE },
+            { text: 'The Star Wars Universe', size: 10, color: COLORS.WHITE },
+            { text: 'All the Vibe Coders', size: 10, color: COLORS.WHITE },
+        ];
+        
+        // Draw crawl text with perspective effect
+        let yOffset = CONFIG.CANVAS_HEIGHT - this.creditsScrollY;
+        
+        crawlText.forEach((line, index) => {
+            const y = yOffset + index * 22;
+            
+            // Only draw if on screen
+            if (y > -30 && y < CONFIG.CANVAS_HEIGHT + 30) {
+                // Perspective fade (text fades as it goes up)
+                const fadeStart = CONFIG.CANVAS_HEIGHT * 0.3;
+                let alpha = 1;
+                if (y < fadeStart) {
+                    alpha = Math.max(0, y / fadeStart);
+                }
+                
+                ctx.globalAlpha = alpha;
+                ctx.font = `${line.size}px "Press Start 2P"`;
+                ctx.fillStyle = line.color;
+                ctx.fillText(line.text, centerX, y);
+            }
+        });
+        
+        ctx.globalAlpha = 1;
+        
+        // Reset scroll if past all text
+        if (this.creditsScrollY > crawlText.length * 22 + CONFIG.CANVAS_HEIGHT) {
+            this.creditsScrollY = 0;
+        }
+        
+        // Back hint (always visible at bottom)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(0, CONFIG.CANVAS_HEIGHT - 25, CONFIG.CANVAS_WIDTH, 25);
+        ctx.fillStyle = COLORS.GRAY;
+        ctx.font = '10px "Press Start 2P"';
+        ctx.fillText('Press SPACE or ESC to return', centerX, CONFIG.CANVAS_HEIGHT - 8);
+    },
+    
+    drawInstructionsScreen(ctx) {
+        // Dim background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+        ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+        
+        const centerX = CONFIG.CANVAS_WIDTH / 2;
+        ctx.textAlign = 'center';
         
         // Title
         ctx.fillStyle = COLORS.GOLD;
         ctx.font = '18px "Press Start 2P"';
-        ctx.fillText('★ CREDITS ★', centerX, panelY + 40);
+        ctx.fillText('★ JEDI TRAINING ★', centerX, 35);
         
-        // Star Wars subtitle
-        ctx.fillStyle = COLORS.YELLOW;
-        ctx.font = '12px "Press Start 2P"';
-        ctx.fillText('A Star Wars Fan Game', centerX, panelY + 70);
+        if (this.instructionsPage === 0) {
+            // Page 1: Controls
+            ctx.fillStyle = COLORS.CYAN;
+            ctx.font = '14px "Press Start 2P"';
+            ctx.fillText('CONTROLS', centerX, 70);
+            
+            const controls = [
+                { key: 'A/D or ←/→', action: 'Move your ship' },
+                { key: 'SPACE', action: 'Fire lasers' },
+                { key: 'SHIFT', action: 'Activate slow-mo' },
+                { key: 'E', action: 'Deploy proton bomb' },
+                { key: 'R', action: 'Restart loop early' },
+                { key: 'ESC', action: 'Pause game' },
+            ];
+            
+            ctx.font = '10px "Press Start 2P"';
+            controls.forEach((ctrl, i) => {
+                const y = 100 + i * 28;
+                ctx.fillStyle = COLORS.YELLOW;
+                ctx.textAlign = 'right';
+                ctx.fillText(ctrl.key, centerX - 20, y);
+                ctx.fillStyle = COLORS.WHITE;
+                ctx.textAlign = 'left';
+                ctx.fillText(ctrl.action, centerX + 20, y);
+            });
+            
+            // Yoda quote
+            ctx.textAlign = 'center';
+            ctx.fillStyle = COLORS.GREEN;
+            ctx.font = '8px "Press Start 2P"';
+            ctx.fillText('"Control, control, you must learn control!"', centerX, 290);
+            ctx.fillStyle = COLORS.GRAY;
+            ctx.fillText('- Master Yoda', centerX, 305);
+            
+        } else {
+            // Page 2: How to Play
+            ctx.fillStyle = COLORS.CYAN;
+            ctx.font = '14px "Press Start 2P"';
+            ctx.fillText('THE MISSION', centerX, 70);
+            
+            const instructions = [
+                'Each loop lasts 60 seconds.',
+                'Destroy enemies to score points.',
+                'When you die, your run becomes',
+                'a GHOST that fights with you!',
+                '',
+                'Stack up to 5+ ghosts to',
+                'overwhelm the LOOP BOSS.',
+                '',
+                'Defeat the boss before time',
+                'runs out to BREAK THE LOOP!',
+            ];
+            
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillStyle = COLORS.WHITE;
+            instructions.forEach((line, i) => {
+                ctx.fillText(line, centerX, 100 + i * 20);
+            });
+            
+            // Han Solo quote
+            ctx.fillStyle = COLORS.CYAN;
+            ctx.font = '8px "Press Start 2P"';
+            ctx.fillText('"Never tell me the odds!"', centerX, 310);
+            ctx.fillStyle = COLORS.GRAY;
+            ctx.fillText('- Han Solo', centerX, 325);
+        }
         
-        // Main credit
-        ctx.fillStyle = COLORS.WHITE;
-        ctx.font = '10px "Press Start 2P"';
-        ctx.fillText('Made during', centerX, panelY + 110);
-        ctx.fillStyle = COLORS.CYAN;
-        ctx.font = '14px "Press Start 2P"';
-        ctx.fillText('Vibe Coding Club', centerX, panelY + 135);
-        
-        // Creator
-        ctx.fillStyle = COLORS.WHITE;
-        ctx.font = '10px "Press Start 2P"';
-        ctx.fillText('Created by', centerX, panelY + 175);
-        ctx.fillStyle = COLORS.MAGENTA;
-        ctx.font = '16px "Press Start 2P"';
-        ctx.fillText('Rishi Ramesh', centerX, panelY + 200);
-        
-        // Music credit
+        // Page indicator
         ctx.fillStyle = COLORS.GRAY;
-        ctx.font = '8px "Press Start 2P"';
-        ctx.fillText('Music inspired by John Williams', centerX, panelY + 235);
+        ctx.font = '10px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Page ${this.instructionsPage + 1}/2  (←/→ to switch)`, centerX, CONFIG.CANVAS_HEIGHT - 35);
         
         // Back hint
         ctx.fillStyle = COLORS.GRAY;
-        ctx.font = '10px "Press Start 2P"';
-        ctx.fillText('Press SPACE or ESC to return', centerX, panelY + panelHeight - 15);
+        ctx.fillText('Press SPACE or ESC to return', centerX, CONFIG.CANVAS_HEIGHT - 12);
     },
     
     // === PAUSE MENU ===
-    pauseOptions: ['RESUME', 'SETTINGS', 'RESTART LOOP', 'QUIT TO MENU'],
+    pauseOptions: ['RESUME', 'RESTART LOOP', 'QUIT TO MENU'],
     pauseSelected: 0,
     
     updatePauseMenu(dt) {
@@ -446,6 +642,8 @@ const Screens = {
         this.stats.score = score;
         this.deathCount = deathCount;
         this.maxDeaths = maxDeaths;
+        // Pick a random Star Wars death quote
+        this.currentDeathQuote = this.deathQuotes[Math.floor(Math.random() * this.deathQuotes.length)];
     },
     
     updateDeath(dt) {
@@ -475,25 +673,36 @@ const Screens = {
         
         // Stats flash
         if (this.deathPhase === 3) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
             ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
             
-            ctx.fillStyle = COLORS.WHITE;
+            ctx.fillStyle = COLORS.RED;
             ctx.font = '24px "Press Start 2P"';
             ctx.textAlign = 'center';
-            ctx.fillText('LOOP FAILED', CONFIG.CANVAS_WIDTH / 2, 120);
+            ctx.fillText('LOOP FAILED', CONFIG.CANVAS_WIDTH / 2, 80);
             
+            // Star Wars quote
+            ctx.fillStyle = COLORS.YELLOW;
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillText(this.currentDeathQuote, CONFIG.CANVAS_WIDTH / 2, 115);
+            
+            ctx.fillStyle = COLORS.WHITE;
             ctx.font = '14px "Press Start 2P"';
-            ctx.fillText(`Time: ${Utils.formatTime(CONFIG.getLoopDuration() - this.stats.time)}`, CONFIG.CANVAS_WIDTH / 2, 170);
-            ctx.fillText(`Score: ${Utils.formatNumber(this.stats.score)}`, CONFIG.CANVAS_WIDTH / 2, 200);
+            ctx.fillText(`Time: ${Utils.formatTime(CONFIG.getLoopDuration() - this.stats.time)}`, CONFIG.CANVAS_WIDTH / 2, 160);
+            ctx.fillText(`Score: ${Utils.formatNumber(this.stats.score)}`, CONFIG.CANVAS_WIDTH / 2, 190);
             
             // Lives remaining
             const livesLeft = this.maxDeaths - this.deathCount;
             ctx.fillStyle = livesLeft <= 2 ? COLORS.RED : COLORS.YELLOW;
-            ctx.fillText(`Attempts Left: ${livesLeft}`, CONFIG.CANVAS_WIDTH / 2, 240);
+            ctx.fillText(`Attempts Left: ${livesLeft}`, CONFIG.CANVAS_WIDTH / 2, 230);
             
             ctx.fillStyle = COLORS.GREEN;
-            ctx.fillText('Ghost Saved ✓', CONFIG.CANVAS_WIDTH / 2, 280);
+            ctx.fillText('Ghost Saved ✓', CONFIG.CANVAS_WIDTH / 2, 270);
+            
+            // Encouraging message
+            ctx.fillStyle = COLORS.CYAN;
+            ctx.font = '8px "Press Start 2P"';
+            ctx.fillText('The Force will guide your ghost...', CONFIG.CANVAS_WIDTH / 2, 310);
         }
     },
     
@@ -509,6 +718,9 @@ const Screens = {
         this.stats.ghostsUsed = ghostsUsed;
         this.stats.synergyHits = synergyHits;
         this.stats.difficulty = this.currentDifficulty;
+        
+        // Pick a random Star Wars victory quote
+        this.currentVictoryQuote = this.victoryQuotes[Math.floor(Math.random() * this.victoryQuotes.length)];
         
         // Calculate rank (adjusted by difficulty)
         const diffMult = {
@@ -569,22 +781,27 @@ const Screens = {
         
         // Title with sparkles
         if (this.victoryPhase >= 1) {
-            ctx.fillStyle = COLORS.CYAN;
+            ctx.fillStyle = COLORS.GOLD;
             ctx.font = '24px "Press Start 2P"';
             ctx.textAlign = 'center';
-            ctx.fillText('✧ LOOP BROKEN ✧', CONFIG.CANVAS_WIDTH / 2, 50);
+            ctx.fillText('✧ LOOP BROKEN ✧', CONFIG.CANVAS_WIDTH / 2, 40);
+            
+            // Star Wars victory quote
+            ctx.fillStyle = COLORS.CYAN;
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillText(this.currentVictoryQuote, CONFIG.CANVAS_WIDTH / 2, 65);
             
             // Difficulty badge
             const diffSettings = DIFFICULTY_SETTINGS[this.stats.difficulty || this.currentDifficulty];
             ctx.font = '12px "Press Start 2P"';
             ctx.fillStyle = this.getDifficultyColor(this.stats.difficulty || this.currentDifficulty);
-            ctx.fillText(diffSettings.name + ' MODE', CONFIG.CANVAS_WIDTH / 2, 75);
+            ctx.fillText(diffSettings.name + ' MODE', CONFIG.CANVAS_WIDTH / 2, 90);
         }
         
         // Stats panel
         if (this.victoryPhase >= 2) {
             const panelX = (CONFIG.CANVAS_WIDTH - 320) / 2;
-            const panelY = 95;
+            const panelY = 105;
             
             ctx.fillStyle = COLORS.PANEL;
             ctx.fillRect(panelX, panelY, 320, 140);
@@ -663,6 +880,8 @@ const Screens = {
             ghosts: ghosts,
             synergy: synergy,
         };
+        // Pick a random Star Wars game over quote
+        this.currentGameOverQuote = this.gameOverQuotes[Math.floor(Math.random() * this.gameOverQuotes.length)];
     },
     
     updateGameOver(dt) {
@@ -696,18 +915,23 @@ const Screens = {
             ctx.fillStyle = COLORS.RED;
             ctx.font = '28px "Press Start 2P"';
             ctx.textAlign = 'center';
-            ctx.fillText('GAME OVER', CONFIG.CANVAS_WIDTH / 2, 70);
+            ctx.fillText('GAME OVER', CONFIG.CANVAS_WIDTH / 2, 55);
+            
+            // Star Wars quote
+            ctx.fillStyle = COLORS.YELLOW;
+            ctx.font = '9px "Press Start 2P"';
+            ctx.fillText(this.currentGameOverQuote, CONFIG.CANVAS_WIDTH / 2, 85);
             
             // Subtitle
             ctx.fillStyle = COLORS.GRAY;
-            ctx.font = '12px "Press Start 2P"';
-            ctx.fillText('The loop has consumed you...', CONFIG.CANVAS_WIDTH / 2, 100);
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillText('The dark side has claimed your ship...', CONFIG.CANVAS_WIDTH / 2, 110);
         }
         
         // Stats panel
         if (this.gameOverPhase >= 1) {
             const panelX = (CONFIG.CANVAS_WIDTH - 320) / 2;
-            const panelY = 120;
+            const panelY = 130;
             
             ctx.fillStyle = COLORS.PANEL;
             ctx.fillRect(panelX, panelY, 320, 120);
