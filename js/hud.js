@@ -86,6 +86,9 @@ const HUD = {
         // Bomb counter (right)
         this.drawBombCounter(ctx, bombs);
         
+        // Control hints (subtle, in corners)
+        this.drawControlHints(ctx, bombs, slowMoMeter);
+        
         // Warning flash overlay
         if (this.warningFlash && Math.floor(this.warningTimer * 4) % 2 === 0) {
             ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
@@ -316,5 +319,56 @@ const HUD = {
         
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+    },
+    
+    // Draw control hints during gameplay
+    drawControlHints(ctx, bombs, slowMoMeter) {
+        ctx.font = '8px "Press Start 2P"';
+        ctx.textAlign = 'left';
+        
+        const y = CONFIG.CANVAS_HEIGHT - CONFIG.BOTTOM_BAR_HEIGHT - 8;
+        
+        // Left side hints
+        ctx.fillStyle = COLORS.GRAY;
+        ctx.globalAlpha = 0.6;
+        ctx.fillText('[A/D] Move', 8, y);
+        ctx.fillText('[SPACE] Fire', 8, y - 12);
+        
+        // Right side hints - more prominent for special actions
+        ctx.textAlign = 'right';
+        const rightX = CONFIG.CANVAS_WIDTH - 8;
+        
+        // Bomb hint - highlight if available
+        if (bombs > 0) {
+            ctx.fillStyle = COLORS.RED;
+            ctx.globalAlpha = 0.9;
+            // Pulse effect
+            if (Math.floor(Date.now() / 500) % 2 === 0) {
+                ctx.globalAlpha = 1;
+            }
+            ctx.fillText('[E] BOMB!', rightX, y);
+        } else {
+            ctx.fillStyle = COLORS.GRAY;
+            ctx.globalAlpha = 0.4;
+            ctx.fillText('[E] Bomb', rightX, y);
+        }
+        
+        // Slow-mo hint - highlight if meter is high
+        const meterPercent = slowMoMeter / CONFIG.SLOWMO_MAX;
+        if (meterPercent > 0.5) {
+            ctx.fillStyle = COLORS.CYAN;
+            ctx.globalAlpha = 0.8;
+        } else {
+            ctx.fillStyle = COLORS.GRAY;
+            ctx.globalAlpha = 0.4;
+        }
+        ctx.fillText('[SHIFT] Slow-Mo', rightX, y - 12);
+        
+        // Restart hint
+        ctx.fillStyle = COLORS.GRAY;
+        ctx.globalAlpha = 0.4;
+        ctx.fillText('[R] Restart', rightX, y - 24);
+        
+        ctx.globalAlpha = 1;
     },
 };
