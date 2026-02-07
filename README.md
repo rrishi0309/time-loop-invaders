@@ -46,3 +46,5 @@ npx serve
 ```
 
 Then open http://localhost:8080
+
+Play here now: https://rrishi0309.github.io/time-loop-invaders/
